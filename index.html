@@ -99,6 +99,8 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             flex: 1;
             max-width: 150px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .btn-yes {
@@ -109,6 +111,10 @@
         .btn-yes:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-yes:active {
+            transform: scale(1.05);
         }
 
         .btn-no {
@@ -200,6 +206,13 @@
                 font-size: 18px;
             }
         }
+
+        @keyframes caer {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -213,8 +226,8 @@
             </p>
             <div class="question">¿Quieres ser mi novia? 💕</div>
             <div class="buttons">
-                <button class="btn-yes" ontouchend="respuestaSi(event)" onclick="respuestaSi(event)">Sí 💖</button>
-                <button class="btn-no" id="btnNo" ontouchend="moverBoton(event)" onclick="moverBoton(event)">No</button>
+                <button class="btn-yes" id="btnSi">Sí 💖</button>
+                <button class="btn-no" id="btnNo">No</button>
             </div>
         </div>
 
@@ -231,31 +244,43 @@
 
     <script>
         let clickCount = 0;
+        let procesando = false;
         
-        function moverBoton(event) {
-            event.preventDefault();
-            event.stopPropagation();
+        // Obtener referencias a los botones
+        const btnNo = document.getElementById('btnNo');
+        const btnSi = document.getElementById('btnSi');
+        
+        // Función para mover el botón NO
+        function moverBoton(e) {
+            if (procesando) return;
+            procesando = true;
             
-            const btn = document.getElementById('btnNo');
+            e.preventDefault();
+            e.stopPropagation();
+            
             clickCount++;
             
             // Reducir el tamaño cada vez que lo tocan
             const newScale = Math.max(0.1, 1 - (clickCount * 0.15));
-            btn.style.transform = `scale(${newScale})`;
+            btnNo.style.transform = `scale(${newScale})`;
             
             // Si es muy pequeño, ocultarlo completamente
             if (clickCount >= 6) {
-                btn.classList.add('hidden');
+                btnNo.classList.add('hidden');
             }
             
-            return false;
+            setTimeout(() => {
+                procesando = false;
+            }, 100);
         }
-
-        function respuestaSi(event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+        
+        // Función para respuesta SÍ
+        function respuestaSi(e) {
+            if (procesando) return;
+            procesando = true;
+            
+            e.preventDefault();
+            e.stopPropagation();
             
             document.getElementById('initial-screen').style.display = 'none';
             document.getElementById('success-screen').classList.add('active');
@@ -263,7 +288,8 @@
             // Crear confeti de corazones
             crearConfeti();
         }
-
+        
+        // Función para crear confeti
         function crearConfeti() {
             const emojis = ['💕', '💖', '💗', '💝', '❤️', '🌹'];
             for (let i = 0; i < 30; i++) {
@@ -283,17 +309,23 @@
                 }, i * 100);
             }
         }
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes caer {
-                to {
-                    transform: translateY(100vh) rotate(360deg);
-                    opacity: 0;
-                }
+        
+        // Agregar event listeners para ambos eventos (touch y click)
+        // Botón NO
+        btnNo.addEventListener('touchstart', moverBoton, { passive: false });
+        btnNo.addEventListener('click', function(e) {
+            if (!('ontouchstart' in window)) {
+                moverBoton(e);
             }
-        `;
-        document.head.appendChild(style);
+        });
+        
+        // Botón SÍ
+        btnSi.addEventListener('touchstart', respuestaSi, { passive: false });
+        btnSi.addEventListener('click', function(e) {
+            if (!('ontouchstart' in window)) {
+                respuestaSi(e);
+            }
+        });
     </script>
 </body>
 </html>
